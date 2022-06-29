@@ -9,31 +9,18 @@ import MyInput from "./components/UI/input/MyInput";
 import MySelect from "./components/UI/select/MySelect";
 import Postfilter from "./components/Postfilter";
 import Mymodal from "./components/UI/mymodal/Mymodal";
+import { usePosts } from "./hooks/usePosts";
+import axios from 'axios';
 
 
 function App() {
 
-  const [posts, setPosts] = useState([
-    { id: 1, title: 'JavaScript', body: 'Description' },
-    { id: 2, title: 'Phyton', body: 'Description' },
-    { id: 3, title: 'C++', body: 'Description' },
-  ])
+  const [posts, setPosts] = useState([])
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
   const [filter, setFilter] = useState({ sort: '', query: '' })
   const [modal, setModal] = useState(false)
-
-
-  const sortedPosts = useMemo(() => {
-    if (filter.sort) {
-      return [...posts].sort((a, b) => a[filter.sort].localeCompare(b[filter.sort].toLowerCase()))
-    }
-    return posts;
-  }, [filter.sort, posts])
-
-  const sortedAndSearch = useMemo(() => {
-    return sortedPosts.filter(post => post.title.toLowerCase().includes(filter.query))
-  }, [filter.query, sortedPosts])
+  const sortedAndSearch = usePosts(posts, filter.sort, filter.query)
 
 
   function addNewPost(e) {
@@ -49,6 +36,10 @@ function App() {
       setBody('')
       setModal(false)
     }
+  }
+  async function fetchPosts() {
+    const response = await axios.get('https://jsonplaceholder.typicode.com/posts')
+    setPosts(response.data)
   }
 
   function removePost(post) {
