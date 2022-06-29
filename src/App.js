@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import Counter from "./components/Counter";
 import './components/App.css'
 import UseState from "./components/UseState";
@@ -11,6 +11,9 @@ import Postfilter from "./components/Postfilter";
 import Mymodal from "./components/UI/mymodal/Mymodal";
 import { usePosts } from "./hooks/usePosts";
 import axios from 'axios';
+import PostService from "./API/PostService";
+import Loader from "./components/UI/loader/Loader";
+import { useFetching } from "./hooks/useFetching";
 
 
 function App() {
@@ -21,7 +24,15 @@ function App() {
   const [filter, setFilter] = useState({ sort: '', query: '' })
   const [modal, setModal] = useState(false)
   const sortedAndSearch = usePosts(posts, filter.sort, filter.query)
+  const [fetchPosts, isPostLoading, postError] = useFetching(async () => {
+    const posts = await PostService.getAll();
+    setPosts(posts)
+  })
 
+
+  useEffect(() => {
+    fetchPosts()
+  }, [])
 
   function addNewPost(e) {
     e.preventDefault();
@@ -37,11 +48,6 @@ function App() {
       setModal(false)
     }
   }
-  async function fetchPosts() {
-    const response = await axios.get('https://jsonplaceholder.typicode.com/posts')
-    setPosts(response.data)
-  }
-
   function removePost(post) {
     setPosts(posts.filter(p => p.id !== post.id))
   }
@@ -59,7 +65,8 @@ function App() {
 
       <hr style={{ margin: '15px 0' }} />
       <Postfilter filter={filter} setFilter={setFilter} />
-      {sortedAndSearch.length ? <PostList remove={removePost} posts={sortedAndSearch} title='Список постов 1' /> : <h2 style={{ textAlign: 'center' }}>Посты не найдены!</h2>}
+      {postError && <h2>Произошла ошибка${postError}</h2>}
+      {isPostLoading ? <div style={{ display: 'flex', justifyContent: 'center', marginTop: '50px' }}><Loader /></div> : <PostList remove={removePost} posts={sortedAndSearch} title='Список постов 1' />}
     </div>
   );
 }
